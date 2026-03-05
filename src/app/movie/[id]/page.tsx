@@ -1,14 +1,14 @@
 import Link from 'next/link';
-import MovieSection from '@/components/movies/MovieSection';
-import {
-  getMovieCreditsData,
-  getMovieDetailData,
-  getMovieVideoData,
-  getSimilarMovies,
-} from '@/lib/api';
+import { getMovieCreditsData, getMovieDetailData } from '@/lib/api';
 import MovieDetailPoster from '@/components/movies/MovieDetailPoster';
 import { formatMinutesToHourMin } from '@/lib/utils';
-import ScrollTop from '@/components/ui/ScrollTop';
+import MovieVideoSection from '@/components/movies/MovieVideoSection';
+import {
+  MovieRelatedSectionSkeleton,
+  MovieVideoSectionSkeleton,
+} from '@/components/ui/Skeletons';
+import { Suspense } from 'react';
+import MovieRelatedSection from '@/components/movies/MovieRelatedSection';
 
 export default async function MovieDetailPage({
   params,
@@ -16,11 +16,9 @@ export default async function MovieDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [movie, video, credits, similar] = await Promise.all([
+  const [movie, credits] = await Promise.all([
     getMovieDetailData(id),
-    getMovieVideoData(id),
     getMovieCreditsData(id),
-    getSimilarMovies(id),
   ]);
 
   const casting = credits.cast
@@ -34,34 +32,12 @@ export default async function MovieDetailPage({
 
   return (
     <>
-      <ScrollTop />
+      {/* <ScrollTop /> */}
       <div className='min-h-screen bg-background pt-16'>
         {/* Video Section */}
-        <section className='bg-secondary'>
-          <div className='max-w-4xl mx-auto px-4 py-8'>
-            <div className='relative aspect-video rounded-lg overflow-hidden bg-black'>
-              {/* 비메오는 `https://player.vimeo.com/video/${video.key}` */}
-              {video && (
-                <iframe
-                  src={
-                    video.site === 'Vimeo'
-                      ? `https://player.vimeo.com/video/${video.key}`
-                      : `https://www.youtube.com/embed/${video.key}`
-                  }
-                  title={`트레일러 영상 정보`}
-                  allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
-                  allowFullScreen
-                  className='absolute inset-0 w-full h-full'
-                />
-              )}
-              {!video && (
-                <div className='flex items-center justify-center min-h-full'>
-                  <p className='text-xl'>트레일러 정보가 없습니다.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
+        <Suspense fallback={<MovieVideoSectionSkeleton />}>
+          <MovieVideoSection id={id} />
+        </Suspense>
 
         {/* Movie Info Section */}
         <section className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
@@ -116,16 +92,9 @@ export default async function MovieDetailPage({
         </section>
 
         {/* Related Movies Section */}
-        {similar && similar.length > 0 && (
-          <section className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-muted'>
-            <MovieSection
-              title='관련있는 영화'
-              subTitle='Related Movies'
-              movies={similar}
-              moreUrl=''
-            />
-          </section>
-        )}
+        <Suspense fallback={<MovieRelatedSectionSkeleton />}>
+          <MovieRelatedSection id={id} />
+        </Suspense>
 
         {/* Back Link */}
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
