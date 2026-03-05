@@ -10,6 +10,19 @@ import {
 import { Suspense } from 'react';
 import MovieRelatedSection from '@/components/movies/MovieRelatedSection';
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const [movie] = await Promise.all([getMovieDetailData(id)]);
+
+  return {
+    title: `Wave - ${movie.title}`,
+  };
+}
+
 export default async function MovieDetailPage({
   params,
 }: {
